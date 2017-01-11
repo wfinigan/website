@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html lang="en">
+
+  <style>
+
+    head
+    {
+      background-color: #EEE;
+    }
+    path
+    {
+      fill: none;
+      stroke: #000;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+
+    }
+    .land {
+      fill: #CCC;
+    }
+
+    .border {
+      fill: none;
+      stroke-width: 1.5px;
+      stroke: #fff;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+    }
+
+    .bubble {
+      fill-opacity: .5;
+      fill: #900;
+      stroke: #fff;
+      stroke-width: .5px;
+    }
+
+    .legend circle {
+      fill: none;
+      stroke: #ccc;
+    }
+
+    .legend text {
+      fill: #777;
+      font: 10px sans-serif;
+      text-anchor: middle;
+    }
+  </style>
+
+    <head>
+
+
+
+        <meta charset="utf-8"/>
+        <meta content="initial-scale=1, width=device-width" name="viewport"/>
+
+    </head>
+
+    <body>
+
+        <p class="map" id="map">
+
+
+
+        <script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
+        <script src="//d3js.org/topojson.v1.min.js"></script>
+        <script>
+
+        var width = 960,
+            height = 600;
+
+        var path = d3.geo.path()
+            .projection(null);
+
+        d3.selectAll(".map").append("svg")
+            .attr("viewBox", "0 0 " + width + " " + height)
+            .attr("width", width)
+            .attr("height", height);
+
+        var svgMap = d3.select("#map").select("svg");
+
+        var radius = d3.scale.sqrt()
+            .domain([0, 1000])
+            .range([0, 15]);
+
+
+        d3.json("us.json", function(error, us) {
+          if (error) return console.error(error);
+            svgMap.append("path")
+              .datum(topojson.feature(us, us.objects.nation))
+              .attr("class", "land")
+              .attr("d", path);
+
+            svgMap.append("path")
+              .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; }))
+              .attr("class", "border border--state")
+              .attr("d", path);
+
+            svgMap.append("g")
+              .attr("class", "bubble")
+            .selectAll("circle")
+              .data(topojson.feature(us, us.objects.counties).features
+                .sort(function(a, b) { return b.properties.population - a.properties.population; }))
+            .enter().append("circle")
+              .attr("transform", function(d) { return "translate(" + path.centroid(d) + ")"; })
+              .attr("r", function(d) { return radius(d.properties.capacity); });
+
+
+            var legend = svgMap.append("g")
+                .attr("class", "legend")
+                .attr("transform", "translate(" + (width - 50) + "," + (height - 20) + ")")
+              .selectAll("g")
+                .data([1e3, 3e3, 6e3])
+              .enter().append("g");
+
+            legend.append("circle")
+                .attr("cy", function(d) { return -radius(d); })
+                .attr("r", radius);
+
+            legend.append("text")
+                .attr("y", function(d) { return -2 * radius(d); })
+                .attr("dy", "1.3em")
+                .text(d3.format(".1s"));
+
+        });
+
+        </script>
+    </body>
+
+</html>
